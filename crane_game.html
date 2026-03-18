@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦾 ULTRA CRANE GAME - リアルクレーンゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ========== グローバルスタイル ========== */
+        :root {
+            --primary: #ff006e;
+            --secondary: #00d4ff;
+            --accent: #ffd60a;
+            --dark: #1a1a2e;
+            --darker: #0f0f1e;
+            --light: #e0e0e0;
+            --success: #00ff41;
+            --danger: #ff3333;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ========== メインコンテナ ========== */
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+        }
+
+        /* ========== ヘッダー ========== */
+        .header {
+            padding: 15px 20px;
+            background: rgba(15, 15, 30, 0.95);
+            border-bottom: 2px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--secondary);
+            text-shadow: 0 0 10px var(--secondary), 0 0 20px var(--primary);
+            letter-spacing: 2px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: var(--accent);
+            font-size: 20px;
+            text-shadow: 0 0 10px var(--accent);
+        }
+
+        /* ========== メインゲームエリア ========== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        /* ========== キャンバスエリア ========== */
+        .game-canvas-wrapper {
+            flex: 1;
+            position: relative;
+            background: rgba(26, 26, 46, 0.8);
+            border: 3px solid var(--secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0, 212, 255, 0.1), 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: linear-gradient(to bottom, 
+                rgba(0, 30, 60, 0.8), 
+                rgba(0, 20, 40, 0.9));
+        }
+
+        /* ========== サイドパネル ========== */
+        .control-panel {
+            width: 280px;
+            background: rgba(15, 15, 30, 0.95);
+            border: 3px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 20px rgba(255, 0, 110, 0.1), 0 0 20px rgba(255, 0, 110, 0.2);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+        }
+
+        /* ========== ボタングループ ========== */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .button-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* ========== ボタンスタイル ========== */
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.3s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        .btn-movement {
+            background: linear-gradient(135deg, var(--secondary), #0099cc);
+            color: var(--dark);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        .btn-movement:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.8);
+        }
+
+        .btn-movement:active {
+            transform: translateY(0);
+        }
+
+        .btn-grab {
+            background: linear-gradient(135deg, var(--primary), #cc0055);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.5);
+            font-size: 14px;
+        }
+
+        .btn-grab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 0, 110, 0.8);
+        }
+
+        .btn-grab:active {
+            transform: scale(0.98);
+        }
+
+        .btn-grab.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, var(--accent), #ffb300);
+            color: var(--dark);
+            box-shadow: 0 0 15px rgba(255, 214, 10, 0.5);
+        }
+
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 214, 10, 0.8);
+        }
+
+        .btn-view.active {
+            background: linear-gradient(135deg, var(--success), #00cc33);
+            color: var(--dark);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, var(--danger), #cc0000);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+        }
+
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 51, 51, 0.8);
+        }
+
+        /* ========== 情報パネル ========== */
+        .info-panel {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--secondary);
+        }
+
+        .info-value {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* ========== 視点表示 ========== */
+        .view-indicator {
+            text-align: center;
+            font-size: 11px;
+            color: var(--secondary);
+            padding: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 4px;
+            margin-top: auto;
+        }
+
+        /* ========== メッセージ表示 ========== */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 46, 0.95);
+            border: 3px solid var(--secondary);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+            animation: messageAppear 0.3s ease;
+        }
+
+        .message-box.success {
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.4);
+        }
+
+        .message-box.failure {
+            border-color: var(--danger);
+            color: var(--danger);
+            box-shadow: 0 0 40px rgba(255, 51, 51, 0.4);
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* ========== スクロール対応 ========== */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 3px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ========== レスポンシブ対応 ========== */
+        @media (max-width: 1200px) {
+            .control-panel {
+                width: 240px;
+            }
+
+            .title {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                width: 100%;
+                height: 150px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                overflow-y: visible;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== HTML構造 ========== -->
+    <div class="container">
+        <!-- ヘッダー -->
+        <div class="header">
+            <div class="title">🦾 ULTRA CRANE</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>チャンス:</span>
+                    <span class="stat-value" id="chancesDisplay">5</span>
+                </div>
+                <div class="stat-item">
+                    <span>スコア:</span>
+                    <span class="stat-value" id="scoreDisplay">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <div class="main-content">
+            <!-- ゲームキャンバス -->
+            <div class="game-canvas-wrapper">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <!-- コントロールパネル -->
+            <div class="control-panel">
+                <!-- 移動操作セクション -->
+                <div class="panel-title">🎮 移動操作</div>
+                <div class="button-group">
+                    <div class="button-row full">
+                        <button class="btn-movement" id="btnUp">↑ 手前（進む）</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="btn-movement" id="btnLeft">← 左</button>
+                        <button class="btn-movement" id="btnRight">右 →</button>
+                    </div>
+                    <div class="button-row full">
+                        <button class="btn-movement" id="btnDown">↓ 奥（戻る）</button>
+                    </div>
+                </div>
+
+                <!-- 掴む操作セクション -->
+                <div class="panel-title">🦾 クレーン操作</div>
+                <div class="button-group">
+                    <div class="button-row full">
+                        <button class="btn-grab" id="btnGrab">【 掴む 】</button>
+                    </div>
+                </div>
+
+                <!-- 視点切替セクション -->
+                <div class="panel-title">🎥 視点切替</div>
+                <div class="button-group">
+                    <div class="button-row">
+                        <button class="btn-view active" id="btnViewFront">正面</button>
+                        <button class="btn-view" id="btnViewTop">上</button>
+                    </div>
+                    <div class="button-row full">
+                        <button class="btn-view" id="btnViewCrane">追従</button>
+                    </div>
+                </div>
+
+                <!-- 情報パネル -->
+                <div class="info-panel">
+                    <div class="info-row">
+                        <span class="info-label">状態:</span>
+                        <span class="info-value" id="statusDisplay">待機中</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">X位置:</span>
+                        <span class="info-value" id="posXDisplay">0.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Z位置:</span>
+                        <span class="info-value" id="posZDisplay">0.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">グリップ:</span>
+                        <span class="info-value" id="gripDisplay">開く</span>
+                    </div>
+                </div>
+
+                <!-- リセットセクション -->
+                <div class="button-group" style="margin-top: auto;">
+                    <div class="button-row full">
+                        <button class="btn-reset" id="btnReset">🔄 ゲーム初期化</button>
+                    </div>
+                </div>
+
+                <!-- 視点指示 -->
+                <div class="view-indicator">
+                    ⌨️ キーボード: 矢印キーで移動 / Gで掴む
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メッセージボックス -->
+    <div class="message-box" id="messageBox"></div>
+
+    <!-- ========== JavaScriptコード ========== -->
+    <script>
+        // ========== ゲーム全体の状態管理 ==========
+        const gameState = {
+            // クレーン位置
+            craneX: 0,          // 左右の位置 (-100 ~ 100)
+            craneZ: 50,         // 前後の位置 (-100 ~ 100)
+            craneY: 280,        // 高さ
+            
+            // グリッパー状態
+            gripOpen: 1.0,      // 0 = 完全に閉じた、1.0 = 完全に開いた
+            gripStrength: 0,    // つかんでいる物体の強度
+            holdingItem: null,  // つかんでいる景品
+            
+            // シーケンス状態
+            isSequenceRunning: false,
+            sequenceStep: 0,
+            sequenceProgress: 0,
+            
+            // ゲーム統計
+            chances: 5,
+            score: 0,
+            itemsCaught: 0,
+            
+            // 視点
+            cameraMode: 0,      // 0=正面, 1=上, 2=クレーン追従
+            
+            // 操作入力
+            moveLeft: false,
+            moveRight: false,
+            moveUp: false,
+            moveDown: false,
+        };
+
+        // ========== ゲーム設定定数 ==========
+        const CONFIG = {
+            CANVAS_WIDTH: 0,
+            CANVAS_HEIGHT: 0,
+            
+            // クレーン設定
+            CRANE_SPEED: 2,
+            CRANE_WIDTH: 80,
+            CRANE_HEIGHT_FROM_FLOOR: 300,
+            CRANE_GRAB_STRENGTH: 0.7,
+            CRANE_MIN_X: -120,
+            CRANE_MAX_X: 120,
+            CRANE_MIN_Z: -80,
+            CRANE_MAX_Z: 100,
+            
+            // グリッパー設定
+            GRIPPER_CLOSE_SPEED: 0.03,
+            GRIPPER_OPEN_SPEED: 0.02,
+            GRIPPER_MIN: 0,
+            GRIPPER_MAX: 1.0,
+            
+            // シーケンスタイミング
+            SEQUENCE_TIMINGS: {
+                0: 60,      // 下降開始 (60フレーム)
+                1: 120,     // 掴む (120フレーム)
+                2: 180,     // 上昇開始 (180フレーム)
+                3: 240,     // 初期位置に戻る (240フレーム)
+                4: 300,     // 出口に移動 (300フレーム)
+                5: 360,     // アーム開放 (360フレーム)
+                6: 420,     // 景品落下 (420フレーム)
+            },
+            
+            // 景品設定
+            ITEM_COUNT: 8,
+            ITEM_SIZE_MIN: 15,
+            ITEM_SIZE_MAX: 40,
+            ITEM_COLORS: [
+                '#FF1493', '#00BFFF', '#FFD700', '#FF6347',
+                '#32CD32', '#FF69B4', '#00CED1', '#FFA500'
+            ],
+            
+            // 物理演算
+            GRAVITY: 0.5,
+            BOUNCE: 0.6,
+            FRICTION: 0.98,
+            
+            // 出口設定
+            EXIT_X: 0,
+            EXIT_Y: 80,
+            EXIT_Z: -100,
+        };
+
+        // ========== 景品オブジェクト ==========
+        class Item {
+            constructor(x, z, color, size, weight = 1.0) {
+                this.x = x;
+                this.y = 100 + Math.random() * 20;
+                this.z = z;
+                this.vx = 0;
+                this.vy = 0;
+                this.vz = 0;
+                this.color = color;
+                this.size = size;
+                this.weight = weight;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationVx = 0;
+                this.rotationVz = 0;
+                this.onFloor = true;
+            }
+
+            // 物理演算更新
+            update() {
+                if (!this.onFloor) {
+                    // 重力適用
+                    this.vy -= CONFIG.GRAVITY;
+                    
+                    // 速度に応じて位置更新
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.z += this.vz;
+                    
+                    // 摩擦
+                    this.vx *= CONFIG.FRICTION;
+                    this.vz *= CONFIG.FRICTION;
+                    
+                    // 床の当たり判定
+                    if (this.y <= this.size) {
+                        this.y = this.size;
+                        this.vy *= -CONFIG.BOUNCE;
+                        this.vx *= 0.95;
+                        this.vz *= 0.95;
+                        
+                        if (Math.abs(this.vy) < 1) {
+                            this.vy = 0;
+                            this.onFloor = true;
+                        }
+                    }
+                    
+                    // 回転
+                    this.rotation += (this.rotationVx + this.rotationVz) * 0.05;
+                }
+                
+                // 機械的な落下防止（テスト用）
+                if (this.y < -100) {
+                    this.y = 100;
+                    this.x = Math.random() * 100 - 50;
+                    this.z = Math.random() * 100 - 50;
+                }
+            }
+
+            // つかまれたかチェック
+            isGrabbedBy(craneX, craneZ, gripperSize) {
+                const dx = this.x - craneX;
+                const dz = this.z - craneZ;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                return dist < gripperSize + this.size;
+            }
+
+            // つかみ位置に移動
+            moveWith(craneX, craneZ, craneY) {
+                this.x = craneX;
+                this.z = craneZ;
+                this.y = craneY - this.size;
+                this.vx = 0;
+                this.vy = 0;
+                this.vz = 0;
+            }
+        }
+
+        // ========== 景品管理 ==========
+        let items = [];
+
+        // ========== 初期化関数 ==========
+        function initializeGame() {
+            // キャンバスサイズ設定
+            const canvas = document.getElementById('gameCanvas');
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+            CONFIG.CANVAS_WIDTH = canvas.width;
+            CONFIG.CANVAS_HEIGHT = canvas.height;
+
+            // 景品生成
+            generateItems();
+
+            // イベントリスナー登録
+            registerEventListeners();
+
+            // ゲームループ開始
+            gameLoop();
+        }
+
+        // ========== 景品生成 ==========
+        function generateItems() {
+            items = [];
+            for (let i = 0; i < CONFIG.ITEM_COUNT; i++) {
+                const x = Math.random() * 160 - 80;
+                const z = Math.random() * 100 - 50;
+                const colorIdx = Math.floor(Math.random() * CONFIG.ITEM_COLORS.length);
+                const color = CONFIG.ITEM_COLORS[colorIdx];
+                const size = CONFIG.ITEM_SIZE_MIN + Math.random() * (CONFIG.ITEM_SIZE_MAX - CONFIG.ITEM_SIZE_MIN);
+                const weight = size / CONFIG.ITEM_SIZE_MAX;
+                
+                items.push(new Item(x, z, color, size, weight));
+            }
+        }
+
+        // ========== イベントリスナー登録 ==========
+        function registerEventListeners() {
+            // キーボード入力
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+
+            // ボタン操作
+            document.getElementById('btnUp').addEventListener('click', () => gameState.moveUp = true);
+            document.getElementById('btnDown').addEventListener('click', () => gameState.moveDown = true);
+            document.getElementById('btnLeft').addEventListener('click', () => gameState.moveLeft = true);
+            document.getElementById('btnRight').addEventListener('click', () => gameState.moveRight = true);
+
+            // タッチ・マウスアップで移動停止
+            document.addEventListener('keyup', () => {
+                if (event.key === 'ArrowUp') gameState.moveUp = false;
+                if (event.key === 'ArrowDown') gameState.moveDown = false;
+                if (event.key === 'ArrowLeft') gameState.moveLeft = false;
+                if (event.key === 'ArrowRight') gameState.moveRight = false;
+            });
+
+            document.getElementById('btnGrab').addEventListener('click', startGrabSequence);
+            document.getElementById('btnViewFront').addEventListener('click', () => setCameraMode(0));
+            document.getElementById('btnViewTop').addEventListener('click', () => setCameraMode(1));
+            document.getElementById('btnViewCrane').addEventListener('click', () => setCameraMode(2));
+            document.getElementById('btnReset').addEventListener('click', resetGame);
+        }
+
+        // ========== キーボード入力処理 ==========
+        function handleKeyDown(event) {
+            if (event.key === 'ArrowUp') gameState.moveUp = true;
+            if (event.key === 'ArrowDown') gameState.moveDown = true;
+            if (event.key === 'ArrowLeft') gameState.moveLeft = true;
+            if (event.key === 'ArrowRight') gameState.moveRight = true;
+            if (event.key === 'g' || event.key === 'G') startGrabSequence();
+            if (event.key === '1') setCameraMode(0);
+            if (event.key === '2') setCameraMode(1);
+            if (event.key === '3') setCameraMode(2);
+        }
+
+        function handleKeyUp(event) {
+            if (event.key === 'ArrowUp') gameState.moveUp = false;
+            if (event.key === 'ArrowDown') gameState.moveDown = false;
+            if (event.key === 'ArrowLeft') gameState.moveLeft = false;
+            if (event.key === 'ArrowRight') gameState.moveRight = false;
+        }
+
+        // ========== クレーン移動処理 ==========
+        function updateCranePosition() {
+            if (gameState.isSequenceRunning) return;
+
+            if (gameState.moveLeft) {
+                gameState.craneX -= CONFIG.CRANE_SPEED;
+            }
+            if (gameState.moveRight) {
+                gameState.craneX += CONFIG.CRANE_SPEED;
+            }
+            if (gameState.moveUp) {
+                gameState.craneZ -= CONFIG.CRANE_SPEED;
+            }
+            if (gameState.moveDown) {
+                gameState.craneZ += CONFIG.CRANE_SPEED;
+            }
+
+            // 範囲制限
+            gameState.craneX = Math.max(CONFIG.CRANE_MIN_X, Math.min(CONFIG.CRANE_MAX_X, gameState.craneX));
+            gameState.craneZ = Math.max(CONFIG.CRANE_MIN_Z, Math.min(CONFIG.CRANE_MAX_Z, gameState.craneZ));
+        }
+
+        // ========== 掴むシーケンス開始 ==========
+        function startGrabSequence() {
+            if (gameState.isSequenceRunning || gameState.chances <= 0) {
+                playSound('error');
+                return;
+            }
+
+            gameState.isSequenceRunning = true;
+            gameState.sequenceStep = 0;
+            gameState.sequenceProgress = 0;
+            gameState.chances--;
+            updateUI();
+            playSound('start');
+        }
+
+        // ========== 掴むシーケンス処理 ==========
+        function updateGrabSequence() {
+            if (!gameState.isSequenceRunning) return;
+
+            gameState.sequenceProgress++;
+
+            // ステップ0: 下降
+            if (gameState.sequenceProgress <= 60) {
+                gameState.craneY -= 3;
+                updateStatus('下降中...');
+            }
+            // ステップ1: 掴む
+            else if (gameState.sequenceProgress <= 120) {
+                gameState.gripOpen = Math.max(0, gameState.gripOpen - CONFIG.GRIPPER_CLOSE_SPEED);
+                
+                if (gameState.gripOpen < 0.3 && !gameState.holdingItem) {
+                    // 景品をつかむ判定
+                    for (let item of items) {
+                        if (item.isGrabbedBy(gameState.craneX, gameState.craneZ, 50)) {
+                            gameState.holdingItem = item;
+                            item.moveWith(gameState.craneX, gameState.craneZ, gameState.craneY);
+                            break;
+                        }
+                    }
+                }
+                
+                updateStatus('掴み中...');
+            }
+            // ステップ2: 上昇
+            else if (gameState.sequenceProgress <= 180) {
+                gameState.craneY += 3;
+                
+                if (gameState.holdingItem) {
+                    gameState.holdingItem.moveWith(gameState.craneX, gameState.craneZ, gameState.craneY);
+                }
+                
+                updateStatus('上昇中...');
+            }
+            // ステップ3: 初期位置に戻る
+            else if (gameState.sequenceProgress <= 240) {
+                gameState.craneX += (0 - gameState.craneX) * 0.05;
+                gameState.craneZ += (50 - gameState.craneZ) * 0.05;
+                gameState.craneY = 280;
+                
+                if (gameState.holdingItem) {
+                    gameState.holdingItem.moveWith(gameState.craneX, gameState.craneZ, gameState.craneY);
+                }
+                
+                updateStatus('初期位置へ...');
+            }
+            // ステップ4: 出口に移動
+            else if (gameState.sequenceProgress <= 300) {
+                gameState.craneX += (CONFIG.EXIT_X - gameState.craneX) * 0.05;
+                gameState.craneZ += (CONFIG.EXIT_Z - gameState.craneZ) * 0.05;
+                
+                if (gameState.holdingItem) {
+                    gameState.holdingItem.moveWith(gameState.craneX, gameState.craneZ, gameState.craneY);
+                }
+                
+                updateStatus('出口へ...');
+            }
+            // ステップ5: アーム開放
+            else if (gameState.sequenceProgress <= 360) {
+                gameState.gripOpen = Math.min(1.0, gameState.gripOpen + CONFIG.GRIPPER_OPEN_SPEED);
+                
+                if (gameState.holdingItem && gameState.gripOpen > 0.7) {
+                    gameState.holdingItem = null;
+                }
+                
+                updateStatus('リリース...');
+            }
+            // ステップ6: 景品落下
+            else if (gameState.sequenceProgress <= 420) {
+                updateStatus('完了！');
+                gameState.isSequenceRunning = false;
+                playSound('success');
+                showMessage('成功! +100点', 'success');
+                gameState.score += 100;
+                gameState.itemsCaught++;
+                updateUI();
+            }
+        }
+
+        // ========== UI更新 ==========
+        function updateUI() {
+            document.getElementById('chancesDisplay').textContent = gameState.chances;
+            document.getElementById('scoreDisplay').textContent = gameState.score;
+            document.getElementById('posXDisplay').textContent = gameState.craneX.toFixed(1);
+            document.getElementById('posZDisplay').textContent = gameState.craneZ.toFixed(1);
+            document.getElementById('gripDisplay').textContent = gameState.gripOpen > 0.5 ? '開く' : '閉じる';
+
+            const grabBtn = document.getElementById('btnGrab');
+            if (gameState.isSequenceRunning || gameState.chances <= 0) {
+                grabBtn.classList.add('disabled');
+                grabBtn.disabled = true;
+            } else {
+                grabBtn.classList.remove('disabled');
+                grabBtn.disabled = false;
+            }
+
+            if (gameState.chances === 0) {
+                updateStatus('ゲーム終了！');
+                playSound('gameover');
+            }
+        }
+
+        function updateStatus(text) {
+            document.getElementById('statusDisplay').textContent = text;
+        }
+
+        // ========== 視点設定 ==========
+        function setCameraMode(mode) {
+            gameState.cameraMode = mode;
+            
+            // ボタン表示更新
+            document.querySelectorAll('.btn-view').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (mode === 0) document.getElementById('btnViewFront').classList.add('active');
+            if (mode === 1) document.getElementById('btnViewTop').classList.add('active');
+            if (mode === 2) document.getElementById('btnViewCrane').classList.add('active');
+        }
+
+        // ========== メッセージ表示 ==========
+        function showMessage(text, type = 'success') {
+            const box = document.getElementById('messageBox');
+            box.textContent = text;
+            box.className = 'message-box ' + type;
+            box.style.display = 'block';
+            
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 2000);
+        }
+
+        // ========== サウンド再生 ==========
+        function playSound(type) {
+            // 簡易サウンド: Web Audio APIで波形生成
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioContext.currentTime;
+            
+            if (type === 'start') {
+                // クレーン開始音
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.frequency.value = 400;
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'success') {
+                // 成功音
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'error' || type === 'gameover') {
+                // エラー音
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.frequency.value = 200;
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        // ========== ゲーム初期化 ==========
+        function resetGame() {
+            gameState.chances = 5;
+            gameState.score = 0;
+            gameState.itemsCaught = 0;
+            gameState.craneX = 0;
+            gameState.craneZ = 50;
+            gameState.craneY = 280;
+            gameState.gripOpen = 1.0;
+            gameState.holdingItem = null;
+            gameState.isSequenceRunning = false;
+            generateItems();
+            updateUI();
+            updateStatus('待機中');
+            playSound('start');
+        }
+
+        // ========== キャンバス描画 ==========
+        function draw() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 背景
+            ctx.fillStyle = 'rgba(20, 35, 60, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // グラデーション背景
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(0, 100, 150, 0.3)');
+            gradient.addColorStop(1, 'rgba(50, 20, 50, 0.3)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // グリッド描画（3D効果）
+            drawGameBox(ctx, canvas);
+
+            // 景品描画
+            drawItems(ctx);
+
+            // クレーン描画
+            drawCrane(ctx);
+
+            // UI オーバーレイ
+            drawOverlay(ctx, canvas);
+        }
+
+        // ========== ゲームボックス描画 ==========
+        function drawGameBox(ctx, canvas) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 1.5;
+
+            // ボックス色
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+            ctx.lineWidth = 2;
+
+            // グリッド線
+            for (let i = -4; i <= 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(centerX + i * 40 * scale, centerY - 100);
+                ctx.lineTo(centerX + i * 40 * scale, centerY + 100);
+                ctx.stroke();
+            }
+
+            // 床のパターン
+            ctx.fillStyle = 'rgba(255, 100, 150, 0.1)';
+            ctx.fillRect(centerX - 160 * scale, centerY + 50, 320 * scale, 100);
+
+            // ボックス枠線
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(centerX - 160 * scale, centerY - 150, 320 * scale, 300);
+        }
+
+        // ========== 景品描画 ==========
+        function drawItems(ctx) {
+            const canvas = document.getElementById('gameCanvas');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 1.5;
+
+            for (let item of items) {
+                // スクリーン座標計算
+                let screenX = centerX + item.x * scale;
+                let screenY = centerY + item.y;
+
+                // 視点別処理
+                if (gameState.cameraMode === 1) {
+                    // 上から視点
+                    screenX = centerX + item.x * scale;
+                    screenY = centerY - 100 + item.z * scale * 0.5;
+                }
+
+                // 描画
+                ctx.save();
+                ctx.translate(screenX, screenY);
+                ctx.rotate(item.rotation);
+                
+                // 影
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(-item.size * 0.6, item.size * 0.7, item.size * 1.2, 8);
+
+                // 景品本体
+                const gradient = ctx.createRadialGradient(-5, -5, 2, 0, 0, item.size);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                gradient.addColorStop(1, item.color);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-item.size, -item.size, item.size * 2, item.size * 2);
+
+                // ハイライト
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-item.size * 0.8, -item.size * 0.8, item.size * 1.6, item.size * 1.6);
+
+                ctx.restore();
+            }
+        }
+
+        // ========== クレーン描画 ==========
+        function drawCrane(ctx) {
+            const canvas = document.getElementById('gameCanvas');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 1.5;
+
+            const craneScreenX = centerX + gameState.craneX * scale;
+            const craneScreenY = centerY - gameState.craneY;
+
+            // クレーン本体（フレーム）
+            ctx.strokeStyle = 'rgba(200, 100, 255, 0.8)';
+            ctx.lineWidth = 4;
+            
+            // 支柱
+            ctx.beginPath();
+            ctx.moveTo(craneScreenX, centerY);
+            ctx.lineTo(craneScreenX, craneScreenY);
+            ctx.stroke();
+
+            // クレーンヘッド
+            ctx.fillStyle = 'rgba(150, 150, 255, 0.6)';
+            ctx.fillRect(craneScreenX - 20, craneScreenY - 20, 40, 40);
+            ctx.strokeStyle = 'rgba(200, 100, 255, 1)';
+            ctx.strokeRect(craneScreenX - 20, craneScreenY - 20, 40, 40);
+
+            // ロープ
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(craneScreenX - 10, craneScreenY + 15);
+            ctx.lineTo(craneScreenX - 10, craneScreenY + 60);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(craneScreenX + 10, craneScreenY + 15);
+            ctx.lineTo(craneScreenX + 10, craneScreenY + 60);
+            ctx.stroke();
+
+            // グリッパー
+            drawGripper(ctx, craneScreenX, craneScreenY);
+
+            // つかんでいる物体
+            if (gameState.holdingItem) {
+                const item = gameState.holdingItem;
+                ctx.save();
+                ctx.translate(craneScreenX, craneScreenY + 60);
+                ctx.fillStyle = item.color;
+                ctx.fillRect(-item.size * 0.8, -item.size * 0.8, item.size * 1.6, item.size * 1.6);
+                ctx.restore();
+            }
+        }
+
+        // ========== グリッパー描画 ==========
+        function drawGripper(ctx, x, y) {
+            const armLength = 40;
+            const gripperWidth = 50 + gameState.gripOpen * 10;
+
+            // 左アーム
+            ctx.strokeStyle = 'rgba(255, 0, 110, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y + 60);
+            ctx.lineTo(x - gripperWidth / 2, y + 100);
+            ctx.stroke();
+
+            // 右アーム
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 60);
+            ctx.lineTo(x + gripperWidth / 2, y + 100);
+            ctx.stroke();
+
+            // グリッパーハンド
+            ctx.fillStyle = 'rgba(255, 0, 110, 0.6)';
+            ctx.beginPath();
+            ctx.arc(x - gripperWidth / 2, y + 100, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(x + gripperWidth / 2, y + 100, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // グリッパーの接続部
+            ctx.strokeStyle = 'rgba(255, 0, 110, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x - gripperWidth / 2, y + 100);
+            ctx.lineTo(x + gripperWidth / 2, y + 100);
+            ctx.stroke();
+        }
+
+        // ========== UI オーバーレイ ==========
+        function drawOverlay(ctx, canvas) {
+            // パフォーマンス情報
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.8)';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('VIEW: ' + ['Front', 'Top', 'Crane'][gameState.cameraMode], 10, 20);
+            ctx.fillText('FPS: ' + Math.round(1000 / 16.67), 10, 35);
+            ctx.fillText('Items: ' + items.length, 10, 50);
+            
+            // グリップ状態表示
+            const gripStatus = (gameState.gripOpen * 100).toFixed(0);
+            ctx.fillText('Grip: ' + gripStatus + '%', canvas.width - 100, 20);
+        }
+
+        // ========== ゲームループ ==========
+        function gameLoop() {
+            // 状態更新
+            updateCranePosition();
+            updateGrabSequence();
+
+            // 景品更新
+            items.forEach(item => item.update());
+
+            // UI更新
+            updateUI();
+
+            // 描画
+            draw();
+
+            // 次フレーム
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ========== 初期化処理 ==========
+        window.addEventListener('load', initializeGame);
+
+        // ウィンドウリサイズ対応
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+            CONFIG.CANVAS_WIDTH = canvas.width;
+            CONFIG.CANVAS_HEIGHT = canvas.height;
+        });
+
+        // ページ離脱時の警告
+        window.addEventListener('beforeunload', (e) => {
+            if (gameState.score > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
